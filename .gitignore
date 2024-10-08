@@ -1,7 +1,9 @@
 # Custom Additions
 contacts.config.json
 
-# Everything below here was added by default by GitHub
+####################################################
+# Everything below was added by GH's python template
+####################################################
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
