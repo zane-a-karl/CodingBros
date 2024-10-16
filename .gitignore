@@ -1,3 +1,10 @@
+# Custom Additions
+contacts.config.json
+
+####################################################
+# Everything below was added by GH's python template
+####################################################
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
