@@ -158,7 +158,7 @@ class SplashScreen(GameState):
         
         # Setup
         self.persist["screen_color"] = "black"
-        self.next_state = "NONE"
+        self.next_state = "GAMEPLAY"
 
         # Buttons/Labels
         BUTTON_STYLE = {"hover_font_color" : ORANGE,
@@ -203,17 +203,11 @@ class SplashScreen(GameState):
         self.done = True
 
     def get_event(self, event):
-        if event.type == pg.QUIT:
-            self.quit = True
-        elif event.type == pg.KEYUP:
-            self.persist["screen_color"] = "gold"
-            self.done = True
-        elif event.type == pg.MOUSEBUTTONUP:
-            self.persist["screen_color"] = "dodgerblue"
-            self.done = True
+        for button in self.button_list:
+            button.check_event(event)
     
-    def exit():
-        pass
+    def exit(self):
+        self.quit = True
     
     def change_color(self):
         pass
