@@ -19,6 +19,7 @@ Dependencies:
 import sys
 import pygame as pg
 from button import Button
+from button.checkbox import Checkbox
 
 ## GLOBALS ##
 WIDTH = 600
@@ -170,7 +171,7 @@ class SplashScreen(GameState):
         
         self.singlePlayerBut = Button((0,0,350,35),
                             ORANGE, 
-                            self.single_play_selected,
+                            self.select_single_play_options,
                             text="SINGLE PLAYER", 
                             **BUTTON_STYLE)
         
@@ -198,22 +199,17 @@ class SplashScreen(GameState):
         self.exitBut.rect.center = (self.screen_rect.centerx, self.screen_rect.bottom - 100)
         self.button_list = [self.singlePlayerBut, self.addPlayerBut, self.onlinePlayBut, self.exitBut]
 
-    def single_play_selected(self):
-        self.next_state = "GAMEPLAY"
-        self.done = True
-
     def get_event(self, event):
         if event.type == pg.QUIT:
             self.quit = True
-        elif event.type == pg.KEYUP:
-            self.persist["screen_color"] = "gold"
-            self.done = True
-        elif event.type == pg.MOUSEBUTTONUP:
-            self.persist["screen_color"] = "dodgerblue"
-            self.done = True
+        for button in self.button_list:
+            button.check_event(event)
     
-    def exit():
-        pass
+    def exit(self):
+        self.quit = True
+
+    def select_single_play_options(self):
+        self.change_state("SINGLE_GAMEPLAY_OPTIONS")
     
     def change_color(self):
         pass
@@ -226,6 +222,173 @@ class SplashScreen(GameState):
         for button in self.button_list:
             button.update(surface)
 
+    def change_state(self, state):
+        self.next_state = state
+        self.done = True
+
+class SelectSinglePlayOptions(GameState):
+    """
+    As names a class that defines the attributes of the Splash Screen State
+    """
+    def __init__(self):
+        super(SelectSinglePlayOptions, self).__init__()
+
+        # Setup
+        self.persist["screen_color"] = "black"
+        self.next_state = "NONE"
+
+        # Title
+        title_font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 72)
+        self.title = title_font.render("SETUP", True, WHITE)
+        self.title_rect = self.title.get_rect()
+        self.title_rect.center = (self.screen_rect.centerx, self.screen_rect.top + 50)
+
+        # Label Setup
+        label_font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42)
+        label_x_offset = 50
+        cb_x_label_offset = label_x_offset + 200
+        cpu_label_y = 125
+        cpu_cb_label_y = cpu_label_y + 50
+        token_label_y = 325
+        token_cb_label_y = token_label_y + 50
+
+
+        # Labels
+        self.cpu_level = label_font.render("CPU Level:", True, WHITE)
+        self.cpu_level_rect = self.cpu_level.get_rect()
+        self.cpu_level_rect.topleft = (label_x_offset, 
+                                       cpu_label_y)
+
+        self.token_type = label_font.render("Token Type:", True, WHITE)
+        self.token_type_rect = self.token_type.get_rect()
+        self.token_type_rect.topleft = (label_x_offset, 
+                                        token_label_y)
+        
+        # Radio Buttons
+        cpu_boxes = []
+
+        self.easy_cb = Checkbox(
+            self.screen_rect, 
+            cb_x_label_offset, cpu_cb_label_y, 0, 
+            caption='Easy',
+            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font_color = WHITE)
+        
+        self.medium_cb = Checkbox(
+            self.screen_rect, 
+            cb_x_label_offset, cpu_cb_label_y + 50, 1,
+            caption='Medium',
+            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font_color = WHITE)
+        
+        self.hard_cb = Checkbox(
+            self.screen_rect,
+            cb_x_label_offset, cpu_cb_label_y + 100, 2,
+            caption='Hard',
+            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font_color = WHITE)
+        
+        cpu_boxes.append(self.easy_cb)
+        cpu_boxes.append(self.medium_cb)
+        cpu_boxes.append(self.hard_cb)
+
+        # Token Selection
+        token_boxes = []
+        
+        self.x_cb = Checkbox(
+            self.screen_rect, 
+            cb_x_label_offset, token_cb_label_y, 0,
+            caption="X's",
+            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font_color = WHITE)
+        
+        self.o_cb = Checkbox(
+            self.screen_rect,
+            cb_x_label_offset, token_cb_label_y + 50, 1,
+            caption="O's",
+            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font_color = WHITE)
+        
+        token_boxes.append(self.x_cb)
+        token_boxes.append(self.o_cb)
+
+        # Buttons
+        button_gap = 300
+        BUTTON_STYLE = {"hover_font_color" : ORANGE,
+                        "font" : pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+                        "font_color": WHITE,
+                        "hover_font_color": BLACK,
+                        "hover_color": GREEN,
+                        "hover_sound" : pg.mixer.Sound("../misc/blipshort1.wav")}
+        
+        self.nextBut = Button((0,0,225,35),
+                             ORANGE, 
+                             self.change_color,
+                             text="NEXT", 
+                             **BUTTON_STYLE)
+        
+        self.backBut = Button((0,0,225,35),
+                             ORANGE,
+                             self.return_home,
+                             text="BACK", 
+                             **BUTTON_STYLE)
+         
+        self.backBut.rect.center = (self.screen_rect.centerx - button_gap/2, 
+                                    self.screen_rect.bottom - 100)
+        self.nextBut.rect.center = (self.screen_rect.centerx + button_gap/2, 
+                                        self.screen_rect.bottom - 100)
+        self.button_list = [self.backBut, 
+                            self.nextBut]
+        
+        # Add Group of Checkboxes
+        self.checkboxes_list = [cpu_boxes, token_boxes]
+
+    def get_event(self, event):
+        if event.type == pg.QUIT:
+            self.quit = True
+
+        # Handle Normal Buttons accordingly
+        for button in self.button_list:
+            button.check_event(event)
+
+        # Handle/Toggle Checkboxes accordingly
+        for current_list in self.checkboxes_list:
+            for current_button in current_list:
+                current_button.check_event(event)
+                if (current_button.checked):
+                    for button in current_list:
+                        if button != current_button:
+                            button.checked = False
+
+    
+    def return_home(self):
+        self.change_state("SPLASH")
+    
+    def change_color(self):
+        pass
+
+    def change_color(self, box, cb_list):
+        if box.checked is True:
+            for b in cb_list:
+                if b != box:
+                    b.checked = False
+        
+    def draw(self, surface):
+        # Background
+        surface.fill(pg.Color(BG_COLOR))
+        surface.blit(self.title, self.title_rect)
+        surface.blit(self.cpu_level, self.cpu_level_rect)
+        surface.blit(self.token_type, self.token_type_rect)
+
+        # Draw Buttons
+        for button in self.button_list:
+            button.update(surface)
+
+        # Draw Checkboxes
+        for current_list in self.checkboxes_list:
+            for button in current_list:
+                button.update(surface)
+            
     def change_state(self, state):
         self.next_state = state
         self.done = True
@@ -253,20 +416,22 @@ class AddFriend(GameState):
     
     def draw(self, surface):
         # Background
-        surface.fill(pg.Color(BACKGROUND_COLOR))
+        surface.fill(pg.Color(BG_COLOR))
 
 class Gameplay(GameState):
     def __init__(self):
         super(Gameplay, self).__init__()
-        
+        self.popup = None
+        self.show_popup = False
 
         # self.rect = pg.Rect((0, 0), (128, 128))
         # self.x_velocity = 1
         
     def startup(self, persistent):
         self.screen_color = pg.Color(BG_COLOR)
+        
         self.title = self.font.render("gameplay", True, pg.Color("gray10"))
-        self.title_rect = self.title.get_rect(center=self.screen_rect.center)
+        #self.title_rect = self.title.get_rect(center=self.screen_rect.center)
         
     def get_event(self, event):
         if event.type == pg.QUIT:
@@ -283,11 +448,30 @@ class Gameplay(GameState):
         #     self.rect.clamp_ip(self.screen_rect)
                  
     def draw(self, surface):
+        # Fill the background
         surface.fill(BG_COLOR)
-        rect = pg.Rect(100, 100, 300, 200)  # Position and size (x, y, width, height)
-        pg.draw.rect(surface, BLACK, rect, border_radius=20)  # Set border_radius to round corners
-        # surface.blit(self.title, self.title_rect)
-        # pg.draw.rect(surface, pg.Color("darkgreen"), self.rect)
+        
+        # Draw the Tic Tac Toe Board
+        self.draw_board(surface)
+
+        # rect = pg.Rect(100, 100, 300, 200)  # Position and size (x, y, width, height)
+        # pg.draw.rect(surface, BLACK, rect, border_radius=20)  # Set border_radius to round corners
+        
+    def draw_board(self,surface):
+        lt = 12 # Line Thickness
+        sw = 150 # Square Width
+        x_start = self.screen_rect.centerx - sw - (sw/2)
+        x_end = self.screen_rect.centerx + sw + (sw/2)
+        y_start = self.screen_rect.centery - sw - (sw/2)
+        y_end = self.screen_rect.centery + sw + (sw/2)
+        
+        # Vertical
+        pg.draw.line(surface, BLACK, (x_start + sw, y_start), (x_start + sw, y_end), lt)
+        pg.draw.line(surface, BLACK, (x_end - sw, y_start), (x_end - sw, y_end), lt)
+
+        # Horizontal
+        pg.draw.line(surface, BLACK, (x_start, y_start + sw), (x_end, y_start + sw), lt)
+        pg.draw.line(surface, BLACK, (x_start, y_end - sw), (x_end, y_end - sw), lt)
 
 class CustomGameImage():
     def __init__(self, x, y, image, scale):
@@ -346,8 +530,10 @@ def main():
 
     # Define the different game states - The Screens that will exist
     states = {"SPLASH": SplashScreen(), 
+              "SINGLE_GAMEPLAY_OPTIONS": SelectSinglePlayOptions(),
               "GAMEPLAY": Gameplay(),
               "ADDFRIEND": AddFriend()
+
               }
 
     # Create a Game object - The Brain/Coordinator for State logic
