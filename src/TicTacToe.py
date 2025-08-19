@@ -28,6 +28,8 @@ WHITE = (255,255,255)
 ORANGE = (255,180,0)
 GREEN = (106,168,79)
 BG_COLOR = (67,67,67)
+EIGHT_BIT_FONT_PATH = "font/Eight-Bit Madness.ttf"
+BLIP_SHORT_SOUND_PATH = "sounds/blipshort1.wav"
 
 # Local Classes
 class Game(object):
@@ -81,6 +83,8 @@ class Game(object):
 
         elif self.state.done:
             self.flip_state()
+            if self.state_name == "SINGLE_GAMEPLAY_OPTIONS":
+                self.state.reset_initial_values(self.screen)
 
         self.state.update(dt)
 
@@ -147,11 +151,11 @@ class SplashScreen(GameState):
         super(SplashScreen, self).__init__()
 
         # Title
-        title_font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 72)
+        title_font = pg.font.Font(EIGHT_BIT_FONT_PATH, 72)
         self.title = title_font.render("TIC - TAC - TOE", True, WHITE)
         self.title_rect = self.title.get_rect()
         self.title_rect.center = (self.screen_rect.centerx, self.screen_rect.top + 50)
-        splashScreenImage = pg.image.load('../images/splashScreenCenter.png').convert_alpha()
+        splashScreenImage = pg.image.load('images/splashScreenCenter.png').convert_alpha()
         self.splashScreenImage = CustomGameImage(300 - (splashScreenImage.get_width() * .5)/2, 
                                                  self.screen_rect.top + 125, 
                                                  splashScreenImage, 
@@ -163,11 +167,11 @@ class SplashScreen(GameState):
 
         # Buttons/Labels
         BUTTON_STYLE = {"hover_font_color" : ORANGE,
-                        "font" : pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+                        "font" : pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
                         "font_color": WHITE,
                         "hover_font_color": BLACK,
                         "hover_color": GREEN,
-                        "hover_sound" : pg.mixer.Sound("../misc/blipshort1.wav")}
+                        "hover_sound" : pg.mixer.Sound(BLIP_SHORT_SOUND_PATH)}
         
         self.singlePlayerBut = Button((0,0,350,35),
                             ORANGE, 
@@ -235,16 +239,24 @@ class SelectSinglePlayOptions(GameState):
 
         # Setup
         self.persist["screen_color"] = "black"
+        self.show_bad_inputs_popup = False
         self.next_state = "NONE"
+        self.cpu_level_selection = None
+        self.token_type_selection = None
+        self.error_text = ""
+        self.button_list = []
+        self.checkboxes_list = []
+        self.text_dict = {}
+        self.surfaces_list = {}
 
         # Title
-        title_font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 72)
-        self.title = title_font.render("SETUP", True, WHITE)
-        self.title_rect = self.title.get_rect()
-        self.title_rect.center = (self.screen_rect.centerx, self.screen_rect.top + 50)
+        title_font = pg.font.Font(EIGHT_BIT_FONT_PATH, 72)
+        title = title_font.render("SETUP", True, WHITE)
+        title_rect = title.get_rect()
+        title_rect.center = (self.screen_rect.centerx, self.screen_rect.top + 50)
 
         # Label Setup
-        label_font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42)
+        label_font = pg.font.Font(EIGHT_BIT_FONT_PATH, 42)
         label_x_offset = 50
         cb_x_label_offset = label_x_offset + 200
         cpu_label_y = 125
@@ -252,40 +264,40 @@ class SelectSinglePlayOptions(GameState):
         token_label_y = 325
         token_cb_label_y = token_label_y + 50
 
-
         # Labels
-        self.cpu_level = label_font.render("CPU Level:", True, WHITE)
-        self.cpu_level_rect = self.cpu_level.get_rect()
-        self.cpu_level_rect.topleft = (label_x_offset, 
-                                       cpu_label_y)
+        cpu_level = label_font.render("CPU Level:", True, WHITE)
+        cpu_level_rect = cpu_level.get_rect()
+        cpu_level_rect.topleft = (label_x_offset, cpu_label_y)
 
-        self.token_type = label_font.render("Token Type:", True, WHITE)
-        self.token_type_rect = self.token_type.get_rect()
-        self.token_type_rect.topleft = (label_x_offset, 
-                                        token_label_y)
+        token_type = label_font.render("Token Type:", True, WHITE)
+        token_type_rect = token_type.get_rect()
+        token_type_rect.topleft = (label_x_offset, token_label_y)
         
-        # Radio Buttons
+        # CPU Level
         cpu_boxes = []
 
         self.easy_cb = Checkbox(
             self.screen_rect, 
             cb_x_label_offset, cpu_cb_label_y, 0, 
+            type = "cpu_level",
             caption='Easy',
-            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font = pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
             font_color = WHITE)
         
         self.medium_cb = Checkbox(
             self.screen_rect, 
             cb_x_label_offset, cpu_cb_label_y + 50, 1,
+            type = "cpu_level",
             caption='Medium',
-            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font = pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
             font_color = WHITE)
         
         self.hard_cb = Checkbox(
             self.screen_rect,
             cb_x_label_offset, cpu_cb_label_y + 100, 2,
+            type = "cpu_level",
             caption='Hard',
-            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font = pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
             font_color = WHITE)
         
         cpu_boxes.append(self.easy_cb)
@@ -298,15 +310,17 @@ class SelectSinglePlayOptions(GameState):
         self.x_cb = Checkbox(
             self.screen_rect, 
             cb_x_label_offset, token_cb_label_y, 0,
+            type = "token_selection",
             caption="X's",
-            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font = pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
             font_color = WHITE)
         
         self.o_cb = Checkbox(
             self.screen_rect,
             cb_x_label_offset, token_cb_label_y + 50, 1,
+            type = "token_selection",
             caption="O's",
-            font = pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+            font = pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
             font_color = WHITE)
         
         token_boxes.append(self.x_cb)
@@ -315,15 +329,15 @@ class SelectSinglePlayOptions(GameState):
         # Buttons
         button_gap = 300
         BUTTON_STYLE = {"hover_font_color" : ORANGE,
-                        "font" : pg.font.Font("../misc/Eight-Bit Madness.ttf", 42),
+                        "font" : pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
                         "font_color": WHITE,
                         "hover_font_color": BLACK,
                         "hover_color": GREEN,
-                        "hover_sound" : pg.mixer.Sound("../misc/blipshort1.wav")}
+                        "hover_sound" : pg.mixer.Sound(BLIP_SHORT_SOUND_PATH)}
         
         self.nextBut = Button((0,0,225,35),
                              ORANGE, 
-                             self.change_color,
+                             self.verifyUserInputs,
                              text="NEXT", 
                              **BUTTON_STYLE)
         
@@ -337,11 +351,130 @@ class SelectSinglePlayOptions(GameState):
                                     self.screen_rect.bottom - 100)
         self.nextBut.rect.center = (self.screen_rect.centerx + button_gap/2, 
                                         self.screen_rect.bottom - 100)
-        self.button_list = [self.backBut, 
-                            self.nextBut]
         
-        # Add Group of Checkboxes
-        self.checkboxes_list = [cpu_boxes, token_boxes]
+        # Add widgets to access lists 
+        self.button_list.append(self.backBut)
+        self.button_list.append(self.nextBut)
+        self.checkboxes_list.append(cpu_boxes)
+        self.checkboxes_list.append(token_boxes)
+
+        self.add_to_text_dict("Single Player Title", title, title_rect)
+        self.add_to_text_dict("CPU Level", cpu_level, cpu_level_rect)
+        self.add_to_text_dict("Token Type", token_type, token_type_rect)
+        
+    def add_to_text_dict(self, name, rendered_text, text_rect, type = "normal"):
+        self.text_dict[name] ={"rendered_text": rendered_text,
+                               "text_rect": text_rect,
+                               "type": type}
+
+    def render_wrapped_text(self, text, font, color, max_width):
+        """return a list of (surface, rect) for each wwrapped line."""
+        words = text.split(" ")
+        lines = []
+        current_line = ""
+
+        for word in words:
+            # Try to add the next word
+            test_line = current_line + word + " "
+            test_surface = font.render(test_line, True, color)
+
+            if test_surface.get_width() <= max_width:
+                current_line = test_line
+            else:
+                # commit the current line and start a new one
+                lines.append(current_line.strip())
+                current_line = word + " "
+
+        if current_line:
+            lines.append(current_line.strip())
+
+        # Render each line into a surface
+        surfaces = []
+        for i, line in enumerate(lines):
+            surf = font.render(line, True, color)
+            rect = surf.get_rect()
+            surfaces.append((surf, rect))
+        
+        return surfaces
+    
+    def close_popup(self):
+        self.bad_inputs_popup = False
+
+    def draw_popup(self, surface):
+
+    def render_popup(self, surface):
+        # Layout vars
+        button_width = 250
+        button_height = 50
+        border = 40 
+
+        # Fonts - Need to store globally this is stupid
+        title_font = pg.font.Font(EIGHT_BIT_FONT_PATH, 50)
+        font = pg.font.Font(EIGHT_BIT_FONT_PATH, 42)
+
+        # Screen
+        popup_size = (surface.get_rect().width - border, 
+                      surface.get_rect().height - border)
+        popup = pg.Surface(popup_size, pg.SRCALPHA)  # allow transparency
+        popup_rect = popup.get_rect(center=(300, 200))
+        popup_rect.center = (surface.get_rect().centerx, surface.get_rect().centery)
+
+        # Dimmed background overlay
+        overlay = pg.Surface(surface.get_size(), pg.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))  # black w/ 150 alpha
+        surface.blit(overlay, (0, 0))
+
+        # Clear popup
+        popup.fill((230, 230, 230, 240))  # light gray w/ some transparency
+
+        # Draw border
+        pg.draw.rect(popup, BLACK, popup.get_rect(), 3)
+
+        # Title
+        title_text = title_font.render("Input Error", True, (0, 0, 0))
+        title_text_rect = title_text.get_rect(center = (popup_rect.centerx, 
+                                                        popup_rect.top + border))
+        popup.blit(title_text, title_text_rect)
+
+        # Image
+        error_image = pg.image.load("images/error_image.png").convert_alpha()
+        scale = 0.5
+        error_image_scaled = pg.transform.scale(error_image, 
+                                                (int(error_image.get_width() * scale), 
+                                                 int(error_image.get_height() * scale)))
+        error_image_rect = error_image_scaled.get_rect(center = (popup_rect.centerx, 
+                                                                 popup_rect.centery - error_image_scaled.get_height()/2))
+        popup.blit(error_image_scaled, error_image_rect)
+
+        # Text
+        wrapped_message_text = self.render_wrapped_text(self.error_text,
+                                                        font,
+                                                        BLACK,
+                                                        popup_rect.width - 40)
+        y = popup_rect.centery
+        for surf, rect in wrapped_message_text:
+            rect.topleft = (popup_rect.left + 20, y)
+            popup.blit(surf, rect)
+            y += rect.height + 5
+
+        # Button
+        BUTTON_STYLE = {"hover_font_color" : ORANGE,
+                        "font" : pg.font.Font(EIGHT_BIT_FONT_PATH, 42),
+                        "font_color": WHITE,
+                        "hover_font_color": BLACK,
+                        "hover_color": GREEN,
+                        "hover_sound" : pg.mixer.Sound(BLIP_SHORT_SOUND_PATH)}
+        self.closePopupButton = Button((popup_rect.centerx - button_width/2, 
+                                        popup_rect.bottom - button_height - 20, 
+                                        button_width, 
+                                        button_height),
+                                        ORANGE,
+                                        self.close_popup,
+                                        text="Close",
+                                        **BUTTON_STYLE)
+        #self.closePopupButton.update(popup)
+
+        return None
 
     def get_event(self, event):
         if event.type == pg.QUIT:
@@ -356,15 +489,27 @@ class SelectSinglePlayOptions(GameState):
             for current_button in current_list:
                 current_button.check_event(event)
                 if (current_button.checked):
+                    if(current_button.type == "cpu_level"):
+                        self.cpu_level_selection = current_button.caption
+                    if(current_button.type == "token_selection"):
+                        self.token_type_selection = current_button.caption
                     for button in current_list:
                         if button != current_button:
                             button.checked = False
 
-    
+    def reset_initial_values(self, screen):
+        self.bad_inputs_popup = False
+        self.next_state = "NONE"
+        self.cpu_level_selection = None
+        self.token_type_selection = None
+        self.error_text = ""
+
+        for current_list in self.checkboxes_list:
+            for current_button in current_list:
+                current_button.reset_to_default(screen)
+
     def return_home(self):
         self.change_state("SPLASH")
-    
-    def change_color(self):
         pass
 
     def change_color(self, box, cb_list):
@@ -372,13 +517,20 @@ class SelectSinglePlayOptions(GameState):
             for b in cb_list:
                 if b != box:
                     b.checked = False
-        
+
     def draw(self, surface):
         # Background
         surface.fill(pg.Color(BG_COLOR))
-        surface.blit(self.title, self.title_rect)
-        surface.blit(self.cpu_level, self.cpu_level_rect)
-        surface.blit(self.token_type, self.token_type_rect)
+
+        # Draw Popup
+        if(self.show_bad_inputs_popup):
+            self.draw_popup(surface)
+
+        # Text
+        for text in self.text_dict:
+            if self.text_dict[text]["type"] == "normal":
+                surface.blit(self.text_dict[text]["rendered_text"], 
+                             self.text_dict[text]["text_rect"])
 
         # Draw Buttons
         for button in self.button_list:
@@ -388,8 +540,30 @@ class SelectSinglePlayOptions(GameState):
         for current_list in self.checkboxes_list:
             for button in current_list:
                 button.update(surface)
-            
-    def change_state(self, state):
+                
+    def verifyUserInputs (self):
+        GAME_STYLE = {"cpu_level" : self.cpu_level_selection,
+                      "user_token" : self.token_type_selection,
+                      "cpu_token": WHITE}
+        
+        error_found = False
+        
+        # Verify user input
+        if self.cpu_level_selection == None:
+            error_found = True
+            self.error_text = "You haven't selected a CPU level! Please close and select."
+        elif self.token_type_selection == None:
+            error_found = True
+            self.error_text = "You haven't select a token type! Please close and select."
+        
+        if error_found:
+            self.render_popup()
+            self.show_bad_inputs_popup = True
+            return
+        
+        self.change_state("GAMEPLAY", **GAME_STYLE)
+
+    def change_state(self, state, **kwargs):
         self.next_state = state
         self.done = True
 
@@ -533,7 +707,6 @@ def main():
               "SINGLE_GAMEPLAY_OPTIONS": SelectSinglePlayOptions(),
               "GAMEPLAY": Gameplay(),
               "ADDFRIEND": AddFriend()
-
               }
 
     # Create a Game object - The Brain/Coordinator for State logic
