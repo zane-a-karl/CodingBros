@@ -1,5 +1,27 @@
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+File: button.py
+Description: This is the custom button class used to create buttons across all tic tac toe screens
+
+Author: Coding Bros
+Email: See team info <project_root>/misc/teamInfo.txt
+Date Created: 2024-10-13
+Last Modified: 2024-10-31
+Version: 1.0
+"""
+# ===============
+# Start Imports
+# ===============
+
+# Basic
 import pygame as pg
 
+# ===============
+# Start Imports
+# ===============
 
 class Button(object):
     """Button class."""
