@@ -54,6 +54,7 @@ class SelectSinglePlayOptions(GameState):
         self.checkboxes_list = []
         self.text_dict = {}
         self.surfaces_list = {}
+        self.persist["user_token_type"] = self.token_type_selection
 
         # Title
         title_font = pg.font.Font(G.EIGHT_BIT_FONT_PATH, 72)
@@ -408,6 +409,7 @@ class SelectSinglePlayOptions(GameState):
             self.show_bad_inputs_popup = True
             return
         
+        self.persist["user_token_type"] = self.token_type_selection
         self.change_state("GAMEPLAY", **GAME_STYLE)
 
     def change_state(self, state, **kwargs):

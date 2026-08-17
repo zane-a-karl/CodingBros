@@ -33,18 +33,19 @@ from globals import TicTacToeGlobals as G
 # ===============
 # End Imports
 # ===============
-
 class Gameplay(GameState):
     def __init__(self):
         super(Gameplay, self).__init__()
         self.popup = None
         self.show_popup = False
+        self.hovered_square = None # index of the square currently hovered, or None
+        self.squares = [] # list of pg.Rect, index 0 - 8, left-to-right, top-to-bottom
 
-        # self.rect = pg.Rect((0, 0), (128, 128))
-        # self.x_velocity = 1
+        self.build_board()
         
     def startup(self, persistent):
         self.screen_color = pg.Color(G.BG_COLOR)
+        self.user_token_type = persistent["user_token_type"]
         
         self.title = self.font.render("gameplay", True, pg.Color("gray10"))
         #self.title_rect = self.title.get_rect(center=self.screen_rect.center)
@@ -56,12 +57,24 @@ class Gameplay(GameState):
             self.title_rect.center = event.pos
         
     def update(self, dt):
+        mouse_pos = pg.mouse.get_pos()
+        self.hovered_square = None
+        for i, rect in enumerate(self.squares):
+            if rect.collidepoint(mouse_pos):
+                self.hovered_square = i
+                break
         pass
-        # self.rect.move_ip(self.x_velocity, 0)
-        # if (self.rect.right > self.screen_rect.right
-        #     or self.rect.left < self.screen_rect.left):
-        #     self.x_velocity *= -1
-        #     self.rect.clamp_ip(self.screen_rect)
+
+    def build_board(self):
+        """Builds the general board for drawing later"""
+        sw = 150 # Square G.WIDTH
+        x_start = self.screen_rect.centerx - sw - (sw/2)
+        y_start = self.screen_rect.centery - sw - (sw/2)
+
+        for row in range(3):
+            for col in range(3):
+                rect = pg.Rect(x_start + col * sw, y_start + row * sw, sw, sw)
+                self.squares.append(rect)
                  
     def draw(self, surface):
         # Fill the background
@@ -72,13 +85,45 @@ class Gameplay(GameState):
 
         # rect = pg.Rect(100, 100, 300, 200)  # Position and size (x, y, G.WIDTH, height)
         # pg.draw.rect(surface, G.BLACK, rect, border_radius=20)  # Set border_radius to round corners
+
+    def draw_x(self, surface, rect, color, thickness = 10, padding = 25):
+        """Draw X on the inside of the hovered rectangle"""
+        start_x = rect.left + padding
+        end_x = rect.right - padding
+        start_y = rect.top + padding
+        end_y = rect.bottom - padding
+
+        # Left to right
+        pg.draw.line(surface, color, (start_x, start_y), (end_x, end_y), thickness)
+
+        # Right to left
+        pg.draw.line(surface, color, (end_x, start_y),(start_x, end_y), thickness)
+
+    def draw_o(self, surface, rect, color, thickness = 10, padding = 25):
+        """Draw Y on the inside of the hovered rectangle"""
+        o_rect = rect.inflate(-padding * 2, -padding * 2)
+        pg.draw.ellipse(surface, color, o_rect, thickness)
         
     def draw_board(self,surface):
+        """Actual board drawn to screen"""
+
         lt = 12 # Line Thickness
         sw = 150 # Square G.WIDTH
+
+        # Highlight hovered square
+        if self.hovered_square is not None:
+            hover_rect = self.squares[self.hovered_square]
+            if(self.user_token_type == "X's"):
+                self.draw_x(surface, hover_rect, G.HOVER_COLOR)
+            elif(self.user_token_type == "O's"):
+                self.draw_o(surface, hover_rect, G.HOVER_COLOR)
+            else:
+                print("Error - No Token Type")
+        
+        # Define boundaries
         x_start = self.screen_rect.centerx - sw - (sw/2)
-        x_end = self.screen_rect.centerx + sw + (sw/2)
         y_start = self.screen_rect.centery - sw - (sw/2)
+        x_end = self.screen_rect.centerx + sw + (sw/2)
         y_end = self.screen_rect.centery + sw + (sw/2)
         
         # Vertical
