@@ -12,7 +12,7 @@ A TicTacToe game built by two brothers using [Pygame](https://www.pygame.org/), 
 ## Project Structure
 
 ```
-CODINGBROS/
+CodingBros/
 ├── font/                          # Custom fonts used in the UI
 ├── images/                        # Game sprites and UI images
 ├── misc/                          # Miscellaneous assets/utilities
@@ -47,7 +47,7 @@ CODINGBROS/
 2. Clone the repository:
    ```bash
    git clone <repo-url>
-   cd CODINGBROS
+   cd CodingBros
    ```
 
 3. That's it — `uv` will handle setting up the virtual environment and installing dependencies automatically when you run the game.
