@@ -19,6 +19,7 @@ class TicTacToeGlobals:
     ORANGE = (255,180,0)
     GREEN = (106,168,79)
     BG_COLOR = (67,67,67)
+    HOVER_COLOR = (242,140,40)
 
     # File Paths
     EIGHT_BIT_FONT_PATH = "font/Eight-Bit Madness.ttf"
