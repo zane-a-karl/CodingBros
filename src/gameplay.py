@@ -40,7 +40,8 @@ class Gameplay(GameState):
         self.show_popup = False
         self.hovered_square = None # index of the square currently hovered, or None
         self.squares = [] # list of pg.Rect, index 0 - 8, left-to-right, top-to-bottom
-
+        self.turn_font = pg.font.Font(G.EIGHT_BIT_FONT_PATH, 52)
+        self.title_text = "Player 1's Turn"
         self.build_board()
         
     def startup(self, persistent):
@@ -48,7 +49,7 @@ class Gameplay(GameState):
         self.user_token_type = persistent["user_token_type"]
         
         self.title = self.font.render("gameplay", True, pg.Color("gray10"))
-        #self.title_rect = self.title.get_rect(center=self.screen_rect.center)
+        self.title_rect = self.title.get_rect(center=self.screen_rect.center)
         
     def get_event(self, event):
         if event.type == pg.QUIT:
@@ -77,14 +78,26 @@ class Gameplay(GameState):
                 self.squares.append(rect)
                  
     def draw(self, surface):
+        """Main draw method that will draw all the individual components for the gameplay screen"""
         # Fill the background
         surface.fill(G.BG_COLOR)
+
+        # Draw turn text
+        self.draw_turn(surface)
         
         # Draw the Tic Tac Toe Board
         self.draw_board(surface)
 
-        # rect = pg.Rect(100, 100, 300, 200)  # Position and size (x, y, G.WIDTH, height)
-        # pg.draw.rect(surface, G.BLACK, rect, border_radius=20)  # Set border_radius to round corners
+    def draw_turn(self, surface):
+        """Function that draws in whos turn it currently is on the top of the screen"""
+        text_surface = self.turn_font.render(self.title_text, True, G.WHITE)
+        text_rect = text_surface.get_rect()
+
+        # Center the rectangle based on your screen size (e.g., 800x600)
+        text_rect.center = (self.screen_rect.width // 2, self.screen_rect.top + 35)
+
+        # Blit using the rect position instead of standard (X, Y) tuples
+        surface.blit(text_surface, text_rect)
 
     def draw_x(self, surface, rect, color, thickness = 10, padding = 25):
         """Draw X on the inside of the hovered rectangle"""
