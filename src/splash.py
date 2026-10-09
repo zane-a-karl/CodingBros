@@ -62,7 +62,7 @@ class SplashScreen(GameState):
         
         self.addPlayerBut = Button((0,0,350,35),
                              G.ORANGE, 
-                             self.change_color,
+                             lambda: self.change_state("ADDFRIEND"),
                              text="ADD FRIEND", 
                              **BUTTON_STYLE)
         
@@ -95,7 +95,7 @@ class SplashScreen(GameState):
 
     def select_single_play_options(self):
         self.change_state("SINGLE_GAMEPLAY_OPTIONS")
-    
+
     def change_color(self):
         pass
         

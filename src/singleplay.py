@@ -356,7 +356,6 @@ class SelectSinglePlayOptions(GameState):
 
     def return_home(self):
         self.change_state("SPLASH")
-        pass
 
     def change_color(self, box, cb_list):
         if box.checked is True:
